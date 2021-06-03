@@ -79,7 +79,7 @@ public class DependencyTreeMojo extends AbstractContrastMavenPluginMojo {
      * Defaults to true.
      */
     @Parameter(property = "contrast.createApplicationIfNeeded")
-    private boolean createApplicationIfNeeded = true;
+    protected boolean createApplicationIfNeeded = true;
 
     final private String DEPENDENCY_TREE_URL_FORMAT = "%s://%s/Contrast/static/ng/index.html#/%s/applications/%s/libs/dependency-tree";
 
