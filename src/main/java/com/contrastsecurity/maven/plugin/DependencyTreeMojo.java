@@ -142,7 +142,8 @@ public class DependencyTreeMojo extends AbstractContrastMavenPluginMojo {
             try {
                 sdk.getApplication(orgUuid, appId);
             } catch (IOException | UnauthorizedException e) {
-                throw new MojoExecutionException("Unable to find application with ID " + appId, e);
+                //UnauthorizedException could be because of an invalid ID or lack of permissions
+                throw new MojoExecutionException("Unable to find application with ID " + appId + " check ID or account permissions", e);
             }
         }
 
@@ -225,6 +226,20 @@ final class ContrastDependencyTreeVisitor implements DependencyNodeVisitor {
         }
     }
 
+    private DependencyDetails detailArtifact(Artifact artifact, boolean transitive) {
+        DependencyDetails details = new DependencyDetails();
+
+        details.setArtifactID(artifact.getArtifactId());
+        details.setGroup(artifact.getGroupId());
+        details.setPackaging(artifact.getType());
+        details.setScope(artifact.getScope());
+        details.setType(transitive ? "transitive" : "direct");
+        details.setVersion(artifact.getVersion());
+
+        return details;
+    }
+
+    @Override
     public boolean visit(DependencyNode node) {
         Artifact artifact = node.getArtifact();
         if (node.getParent() == null) {
@@ -237,7 +252,7 @@ final class ContrastDependencyTreeVisitor implements DependencyNodeVisitor {
         String artifactKey = formatArtifact(artifact, false);
         log.debug("Visiting node " + artifactKey);
 
-        DependencyDetails details = new DependencyDetails(artifact, (node.getParent().getParent() == null ? "direct" : "transitive"));
+        DependencyDetails details = detailArtifact(artifact, node.getParent().getParent() != null);
         for (DependencyNode child : node.getChildren()) {
             String descriptor = formatArtifact(child.getArtifact(), false);
             log.debug(">> Adding edge " + descriptor);
@@ -248,6 +263,7 @@ final class ContrastDependencyTreeVisitor implements DependencyNodeVisitor {
         return true;
     }
 
+    @Override
     public boolean endVisit(DependencyNode node) {
         return true;
     }
